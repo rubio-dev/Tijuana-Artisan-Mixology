@@ -6,58 +6,63 @@ go
 use TijuanaArtisanMixology
 go
 
--- Tabla de clientes
+-- Tabla de Clientes
 create table Clientes (
-id_cliente int primary key,
-nombre varchar (100) not null,
-correo varchar (100) unique not null,
-telefono varchar (20),
-preferencia_bebidas varchar (100),
-puntos_acumulados int default 0,
-fecha_registro date default getdate()
-)
-
--- Tabla de ingredientes
-create table Ingredientes (
-id_ingredientes int primary key,
-nombre_ingrediente varchar(100) not null,
-stock int check (stock >= 0),
-unidad_medida varchar (20),
-costo_unitario float check (costo_unitario >= 0)
-)
-
--- Tabla del menu
-create table Menu (
-id_bebida int primary key,
-nombre_bebida varchar(100) not null,
-id_ingredientes int,
-precio float check (precio >= 0),
-popularidad int default 0,
-foreign key (id_ingredientes) references Ingredientes(id_ingredientes)
-)
-
--- Tabla de pedidos
-create table Pedidos (
-id_pedido int primary key,
-id_cliente int,
-detalles_pedido varchar (255),
-total_consumo float check (total_consumo >= 0),
-forma_pago varchar (50),
-fecha_pedido datetime default getdate(),
-foreign key (id_cliente) references Clientes(id_cliente)
-)
-
--- Tabla de personal
-create table Personal (
-id_mesero int primary key,
-nombre varchar(100) not null,
-turno varchar(20),
-id_pedido int,
-total_pedidos_atendidos int default 0,
-desempeno int check (desempeno between 1 and 10),
-foreign key (id_pedido) references Pedidos (id_pedido)
+    id_cliente int primary key,                         -- Llave primaria: identificador unico del cliente
+    nombre varchar (100) not null,                      -- Restriccion de entidad: NOT NULL asegura que siempre haya nombre
+    correo varchar (100) unique not null,               -- Restriccion de entidad: NOT NULL y UNIQUE para evitar duplicados
+    telefono varchar (20),
+    preferencia_bebidas varchar (100),
+    puntos_acumulados int default 0,                    -- Restriccion de dominio: valor por defecto de 0
+    fecha_registro date default getdate()               -- Restriccion de dominio: fecha automatica del sistema
 )
 go
+
+-- Tabla de Ingredientes
+create table Ingredientes (
+    id_ingredientes int primary key,                    -- Llave primaria
+    nombre_ingrediente varchar(100) not null,           -- Restriccion de entidad
+    stock int check (stock >= 0),                       -- Restriccion de dominio: no se permiten valores negativos
+    unidad_medida varchar (20),
+    costo_unitario float check (costo_unitario >= 0)    -- Restriccion de dominio
+)
+go
+
+-- Tabla del Menú
+create table Menu (
+    id_bebida int primary key,                          -- Llave primaria
+    nombre_bebida varchar(100) not null,                -- Restriccion de entidad
+    id_ingredientes int,                                -- Llave foranea referenciando a Ingredientes
+    precio float check (precio >= 0),                   -- Restriccion de dominio
+    popularidad int default 0,                          -- Restriccion de dominio: valor por defecto
+    foreign key (id_ingredientes) references Ingredientes(id_ingredientes)  -- Restriccion referencial
+)
+go
+
+-- Tabla de Pedidos
+create table Pedidos (
+    id_pedido int primary key,                          -- Llave primaria
+    id_cliente int,                                     -- Llave foranea referenciando a Clientes
+    detalles_pedido varchar (255),
+    total_consumo float check (total_consumo >= 0),     -- Restriccion de dominio
+    forma_pago varchar (50),
+    fecha_pedido datetime default getdate(),            -- Restriccion de dominio
+    foreign key (id_cliente) references Clientes(id_cliente)  -- Restriccion referencial
+)
+go
+
+-- Tabla de Personal
+create table Personal (
+    id_mesero int primary key,                          -- Llave primaria
+    nombre varchar(100) not null,                       -- Restriccion de entidad
+    turno varchar(20),
+    id_pedido int,                                      -- Llave foranea referenciando a Pedidos
+    total_pedidos_atendidos int default 0,              -- Restriccion de dominio
+    desempeno int check (desempeno between 1 and 10),   -- Restriccion de dominio: valores validos entre 1 y 10
+    foreign key (id_pedido) references Pedidos (id_pedido)  -- Restriccion referencial
+)
+go
+
 
 -- Insercion de los datos
 -- Clientes
@@ -96,4 +101,83 @@ insert into Personal values (1, 'Marcos Reyes', 'Tarde', 1, 45, 9)
 insert into Personal values (2, 'Laura Soto', 'Noche', 2, 33, 8)
 insert into Personal values (3, 'David Luna', 'Tarde', 3, 28, 7)
 insert into Personal values (4, 'Ana López', 'Mañana', 4, 55, 10)
+go
+
+-- Actualizacion de registros
+-- Actualizar puntos acumulados de un cliente
+update Clientes
+set Puntos_Acumulados = 350
+where Nombre = 'Emilio Epstein'
+go
+
+-- Actualizar stock y costo de 'Ron Blanco'
+update Ingredientes
+set Stock = 800, Costo_Unitario = 1.30
+where Nombre_Ingrediente = 'Ron Blanco'
+go
+
+-- Cambiar forma de pago de un pedido
+update Pedidos
+set Forma_Pago = 'Transferencia'
+where Id_Pedido = 4
+go
+
+-- Eliminacion de registros
+-- Eliminar un pedido específico
+delete from Pedidos
+where Id_Pedido = 2
+go
+
+-- Eliminar cliente 
+delete from Clientes
+where Nombre = 'Omar S. Diddy'
+go
+
+-- Eliminar bebida del menu
+delete from Menu
+where Nombre_Bebida = 'Daiquiri'
+go
+
+-- Consultas
+-- Mostrar todos los clientes ordenados por puntos acumulados
+select * from Clientes
+order by Puntos_Acumulados desc
+go
+
+-- Consultar los pedidos junto con el nombre del cliente
+select P.Id_Pedido, C.Nombre as Cliente, P.Detalles_Pedido, P.Total_Consumo
+from Pedidos P
+join Clientes C on P.Id_Cliente = C.Id_Cliente
+go
+
+-- Ver bebidas con precio mayor a 80
+select Nombre_Bebida, Precio
+from Menu
+where Precio > 80
+go
+
+-- Consultar ingredientes con bajo stock (menor a 200)
+select Nombre_Ingrediente, Stock
+from Ingredientes
+where Stock < 200
+go
+
+-- Modificaciones
+-- Agregar columna de correo alternativo en clientes
+alter table Clientes
+add Correo_Alternativo varchar(100)
+go
+
+-- Cambiar tipo de dato de Total_Consumo a decimal
+alter table Pedidos
+alter column Total_Consumo decimal(10,2)
+go
+
+-- Eliminaciones
+-- Eliminar tabla Menu 
+drop table Menu
+go
+
+-- Eliminar tabla Personal
+drop table Personal
 go
