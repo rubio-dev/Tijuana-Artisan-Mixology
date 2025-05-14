@@ -8,58 +8,58 @@ go
 
 -- Tabla de Clientes
 create table Clientes (
-    id_cliente int primary key,                         -- Llave primaria: identificador unico del cliente
-    nombre varchar (100) not null,                      -- Restriccion de entidad: NOT NULL asegura que siempre haya nombre
-    correo varchar (100) unique not null,               -- Restriccion de entidad: NOT NULL y UNIQUE para evitar duplicados
-    telefono varchar (20),
-    preferencia_bebidas varchar (100),
-    puntos_acumulados int default 0,                    -- Restriccion de dominio: valor por defecto de 0
-    fecha_registro date default getdate()               -- Restriccion de dominio: fecha automatica del sistema
+id_cliente int primary key,                         -- Llave primaria: identificador unico del cliente
+nombre varchar (100) not null,                      -- Restriccion de entidad: NOT NULL asegura que siempre haya nombre
+correo varchar (100) unique not null,               -- Restriccion de entidad: NOT NULL y UNIQUE para evitar duplicados
+telefono varchar (20),
+preferencia_bebidas varchar (100),
+puntos_acumulados int default 0,                    -- Restriccion de dominio: valor por defecto de 0
+fecha_registro date default getdate()               -- Restriccion de dominio: fecha automatica del sistema
 )
 go
 
 -- Tabla de Ingredientes
 create table Ingredientes (
-    id_ingredientes int primary key,                    -- Llave primaria
-    nombre_ingrediente varchar(100) not null,           -- Restriccion de entidad
-    stock int check (stock >= 0),                       -- Restriccion de dominio: no se permiten valores negativos
-    unidad_medida varchar (20),
-    costo_unitario float check (costo_unitario >= 0)    -- Restriccion de dominio
+id_ingredientes int primary key,                    -- Llave primaria
+nombre_ingrediente varchar(100) not null,           -- Restriccion de entidad
+stock int check (stock >= 0),                       -- Restriccion de dominio: no se permiten valores negativos
+unidad_medida varchar (20),
+costo_unitario float check (costo_unitario >= 0)    -- Restriccion de dominio
 )
 go
 
 -- Tabla del Menú
 create table Menu (
-    id_bebida int primary key,                          -- Llave primaria
-    nombre_bebida varchar(100) not null,                -- Restriccion de entidad
-    id_ingredientes int,                                -- Llave foranea referenciando a Ingredientes
-    precio float check (precio >= 0),                   -- Restriccion de dominio
-    popularidad int default 0,                          -- Restriccion de dominio: valor por defecto
-    foreign key (id_ingredientes) references Ingredientes(id_ingredientes)  -- Restriccion referencial
+id_bebida int primary key,                          -- Llave primaria
+nombre_bebida varchar(100) not null,                -- Restriccion de entidad
+id_ingredientes int,                                -- Llave foranea referenciando a Ingredientes
+precio float check (precio >= 0),                   -- Restriccion de dominio
+popularidad int default 0,                          -- Restriccion de dominio: valor por defecto
+foreign key (id_ingredientes) references Ingredientes(id_ingredientes)  -- Restriccion referencial
 )
 go
 
 -- Tabla de Pedidos
 create table Pedidos (
-    id_pedido int primary key,                          -- Llave primaria
-    id_cliente int,                                     -- Llave foranea referenciando a Clientes
-    detalles_pedido varchar (255),
-    total_consumo float check (total_consumo >= 0),     -- Restriccion de dominio
-    forma_pago varchar (50),
-    fecha_pedido datetime default getdate(),            -- Restriccion de dominio
-    foreign key (id_cliente) references Clientes(id_cliente)  -- Restriccion referencial
+id_pedido int primary key,                          -- Llave primaria
+id_cliente int,                                     -- Llave foranea referenciando a Clientes
+detalles_pedido varchar (255),
+total_consumo float check (total_consumo >= 0),     -- Restriccion de dominio
+forma_pago varchar (50),
+fecha_pedido datetime default getdate(),            -- Restriccion de dominio
+foreign key (id_cliente) references Clientes(id_cliente)  -- Restriccion referencial
 )
 go
 
 -- Tabla de Personal
 create table Personal (
-    id_mesero int primary key,                          -- Llave primaria
-    nombre varchar(100) not null,                       -- Restriccion de entidad
-    turno varchar(20),
-    id_pedido int,                                      -- Llave foranea referenciando a Pedidos
-    total_pedidos_atendidos int default 0,              -- Restriccion de dominio
-    desempeno int check (desempeno between 1 and 10),   -- Restriccion de dominio: valores validos entre 1 y 10
-    foreign key (id_pedido) references Pedidos (id_pedido)  -- Restriccion referencial
+id_mesero int primary key,                          -- Llave primaria
+nombre varchar(100) not null,                       -- Restriccion de entidad
+turno varchar(20),
+id_pedido int,                                      -- Llave foranea referenciando a Pedidos
+total_pedidos_atendidos int default 0,              -- Restriccion de dominio
+desempeno int check (desempeno between 1 and 10),   -- Restriccion de dominio: valores validos entre 1 y 10
+foreign key (id_pedido) references Pedidos (id_pedido)  -- Restriccion referencial
 )
 go
 
