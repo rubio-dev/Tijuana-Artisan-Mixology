@@ -181,3 +181,90 @@ go
 -- Eliminar tabla Personal
 drop table Personal
 go
+
+----------------------------------------Unidad 2-----------------------------------------------------------------------------------------
+
+-- 1. GETDATE
+-- Muestra los pedidos realizados en la fecha actual del sistema
+SELECT * 
+FROM Pedidos
+WHERE CAST(fecha_pedido AS date) = CAST(GETDATE() AS date);
+GO
+
+-- 2. FORMAT
+-- Muestra el ID del pedido junto con la fecha formateada en un estilo legible (dd/MM/yyyy hh:mm am/pm)
+SELECT id_pedido, FORMAT(fecha_pedido, 'dd/MM/yyyy hh:mm tt') AS FechaFormateada
+FROM Pedidos;
+GO
+
+-- 3. CONCAT
+-- Combina el nombre del cliente con su bebida favorita en una sola columna de texto
+SELECT CONCAT(nombre, ' prefiere ', preferencia_bebidas) AS PreferenciaCliente
+FROM Clientes;
+GO
+
+-- 4. CAST
+-- Convierte el valor numérico del total de consumo en texto
+SELECT CAST(total_consumo AS varchar) AS TotalComoTexto
+FROM Pedidos;
+GO
+
+-- 5. Funciones Agregadas (COUNT)
+-- Cuenta el número total de clientes registrados
+SELECT COUNT(*) AS TotalClientes
+FROM Clientes;
+GO
+
+-- 6. Agrupación (GROUP BY + SUM)
+-- Muestra el total de consumo agrupado por cada forma de pago
+SELECT forma_pago, SUM(total_consumo) AS TotalPorPago
+FROM Pedidos
+GROUP BY forma_pago;
+GO
+
+-- 7. WHERE con AND, OR, NOT y comparadores
+-- Muestra los clientes que tienen más de 100 puntos y no prefieren la bebida 'Mojito'
+SELECT * 
+FROM Clientes
+WHERE puntos_acumulados > 100 AND preferencia_bebidas <> 'Mojito';
+GO
+
+-- 8. BETWEEN, LIKE, IN, ISNULL, NOT NULL
+-- Muestra clientes cuyo nombre contiene la letra 'a', tienen puntos entre 100 y 200, y un correo no nulo
+SELECT * 
+FROM Clientes
+WHERE nombre LIKE '%a%'
+  AND puntos_acumulados BETWEEN 100 AND 200
+  AND correo IS NOT NULL;
+GO
+
+-- 9. JOINs
+-- INNER JOIN: Muestra los pedidos junto al nombre del cliente que los realizó
+SELECT P.id_pedido, C.nombre, P.total_consumo
+FROM Pedidos P
+INNER JOIN Clientes C ON P.id_cliente = C.id_cliente;
+GO
+
+-- LEFT JOIN: Muestra todos los clientes y los pedidos si existen (clientes sin pedidos también aparecerán)
+SELECT C.nombre, P.id_pedido
+FROM Clientes C
+LEFT JOIN Pedidos P ON C.id_cliente = P.id_cliente;
+GO
+
+-- 10. SUM, COUNT, AVG, MIN, MAX
+-- Muestra estadísticas de los pedidos: total, promedio, mínimo y máximo consumo
+SELECT 
+  SUM(total_consumo) AS Total,
+  AVG(total_consumo) AS Promedio,
+  MIN(total_consumo) AS Minimo,
+  MAX(total_consumo) AS Maximo
+FROM Pedidos;
+GO
+
+-- 11. GROUP BY
+-- Muestra el total de consumo agrupado por cliente
+SELECT id_cliente, SUM(total_consumo) AS TotalPorCliente
+FROM Pedidos
+GROUP BY id_cliente;
+GO
+
