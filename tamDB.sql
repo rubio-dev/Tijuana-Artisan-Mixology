@@ -267,3 +267,116 @@ SELECT id_cliente, SUM(total_consumo) AS TotalPorCliente
 FROM Pedidos
 GROUP BY id_cliente;
 GO
+
+
+-------------------------------------------------Unidad 4----------------------------------------------------------------------------------
+/*		PROCEDIMIENTOS ALMACENADOS		*/
+
+-- A)
+-- Crear procedimiento almacenado
+CREATE PROCEDURE Consultar AS
+BEGIN -- Mostrar todos los clientes ordenados por puntos acumulados
+	SELECT * FROM Clientes ORDER BY Puntos_Acumulados DESC
+END;
+go
+
+-- Ejecutar procedimiento almacenado
+EXEC Consultar;
+go
+
+
+-- B)
+-- Modificar procedimiento almacenado 
+ALTER PROCEDURE Consultar 
+	@ID INT
+AS
+BEGIN -- Mostrar el cliente, puntos acumulados y total de pedidos realizados respecto al id 
+	SELECT C.id_cliente AS '#', C.nombre AS Cliente, C.puntos_acumulados AS Puntos, COUNT(P.id_cliente) AS "Pedidos realizados"
+	FROM Clientes C INNER JOIN Pedidos P ON C.id_cliente = P.id_cliente
+	WHERE C.id_cliente = @ID
+	GROUP BY C.id_cliente, C.nombre, C.puntos_acumulados
+END;
+go
+
+-- Ejecutar procedimiento almacenado con parámetro
+EXEC Consultar @ID = 2;
+go
+
+-- Eliminar procedimiento almacenado
+DROP PROCEDURE Consultar;
+go
+
+-- C)
+-- Crear procedimiento almacenado mediante transacciones
+ALTER PROCEDURE RealizarPedido
+    @id_cliente int,
+	@id_pedido int,
+    @detalles_pedido varchar(255),
+    @total_consumo float,
+    @forma_pago varchar(50),
+    @id_mesero int,
+	@puntos_otorgados int output -- Devolver puntos que obtuvo el cliente por consumo
+as
+BEGIN
+-- Registra un nuevo pedido, actualiza los puntos del cliente según el consumo y asigna el pedido al mesero
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Insertar el pedido
+        INSERT INTO Pedidos VALUES (@id_pedido,@id_cliente, @detalles_pedido, @total_consumo, @forma_pago,default);
+
+        -- Asignar el pedido al mesero
+        UPDATE Personal SET id_pedido = @id_pedido, total_pedidos_atendidos = total_pedidos_atendidos + 1
+        WHERE id_mesero = @id_mesero;
+
+		-- Calcular puntos a otorgar y actualizarlo:
+		--  (1 punto por cada $10)
+        SET @puntos_otorgados = floor(@total_consumo / 10.0); -- Se redondea el número resultante
+
+        UPDATE Clientes SET puntos_acumulados = puntos_acumulados + @puntos_otorgados
+        WHERE id_cliente = @id_cliente;
+
+        COMMIT TRANSACTION;
+    END TRY
+
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+		SET @puntos_otorgados = -1; -- Asignar número como error
+    END CATCH
+
+END
+go
+
+-- Ejecutar
+DECLARE @puntos int;
+EXEC RealizarPedido
+    @id_cliente = 2,
+    @id_pedido = 5,
+    @detalles_pedido = '2 frappes y 1 smoothie',
+    @total_consumo = 86.50,
+    @forma_pago = 'Efectivo',
+    @id_mesero = 1,
+    @puntos_otorgados = @puntos output;
+
+SELECT @puntos AS PuntosOtorgados;
+
+
+
+
+/*		DISPARADOR		*/
+
+-- Aplicado a la tabla Menu después de insertar
+CREATE TRIGGER actualizarStock ON Menu
+AFTER INSERT AS
+BEGIN -- Actualizar el stock del ingrediente utilizado cuando se insertó
+    UPDATE Ingredientes SET stock = stock - 1
+    FROM Ingredientes I INNER JOIN inserted ins -- Tabla temporal
+	ON I.id_ingredientes = ins.id_ingredientes
+    WHERE i.stock >= 1;
+END
+go
+
+
+SELECT nombre_ingrediente, stock FROM Ingredientes WHERE id_ingredientes = 2    -- Verificar stock antiguo
+INSERT INTO Menu VALUES (6, 'Margarita', 2, 90.0, 7);                           -- Activar disparador
+SELECT nombre_ingrediente, stock FROM Ingredientes WHERE id_ingredientes = 2    -- Verificar stock nuevo
