@@ -269,13 +269,134 @@ GROUP BY id_cliente;
 GO
 
 /*-----------------------------------------------Unidad 3----------------------------------------------------------------------------------*/
---Roles usuario
+
+use TijuanaArtisanMixology --Utilizacion de la base de datos
+go
+
+/*      Roles usuario       */
+--Creacion de login
+CREATE LOGIN MAYOR             --Creacion de login con mayores permisos
+WITH PASSWORD = 'Seguro09+-';
+GO
+
+CREATE LOGIN MIDDLE_HIGH             --Creacion segundo login
+WITH PASSWORD ='Licencia03,.';
+
+CREATE LOGIN MIDDLE_LOW
+WITH PASSWORD='Crono06-_';
+
+CREATE LOGIN MENOR
+WITH PASSWORD = 'Comedor04||';
+
+
+--Creacion de Usuarios
+CREATE USER SUPERVISOR 
+FOR LOGIN MAYOR;
+
+CREATE USER GERENTE
+FOR LOGIN MIDDLE_HIGH;
+
+CREATE USER COCINA 
+FOR LOGIN MIDDLE_LOW;
+
+CREATE USER MESERA
+FOR LOGIN MENOR;
+
+
+--Asignacion de permisos y roles
+EXEC sp_addrolemember 'db_owner','SUPERVISOR'; --Rol fijo owner a nivel BD
+GO
+
+EXEC sp_addrolemember 'db_datawriter','GERENTE'; --Rol fijo datareader a nivel BD
+GO
+
+
+GRANT INSERT, DELETE, SELECT, UPDATE ON dbo.Menu to COCINA--Rol personalizado para la tabla menu e ingredientes
+GO
+
+GRANT SELECT ON dbo.vwMesera to MESERA--Rol personalizado para solo ver la vista
+GO
+
+SELECT name, type_desc FROM sys.server_principals WHERE type IN ('S', 'U');-- Verificar logins
+GO
+
+SELECT name, type_desc FROM sys.database_principals WHERE type IN ('S', 'U');-- Verificar usuarios en una base de datos
+GO
+
 
 --Creacion de vistas
+CREATE VIEW vwMesera AS         --Creacion de la vista
+    SELECT 
+        m.nombre_bebida as BEBIDA,
+        m.precio as PRECIO,
+        i.nombre_ingrediente as INGREDIENTES,
+        i.unidad_medida as MEDIDA
+    FROM
+        Menu m 
+    INNER JOIN 
+        Ingredientes i ON m.id_ingredientes=i.id_ingredientes;
+
+ALTER VIEW vwMesera             --Alteracion de la vista
+    AS
+    SELECT 
+        m.id_bebida as NoBebida,
+        m.nombre_bebida as BEBIDA,
+        m.precio as PRECIO,
+        i.nombre_ingrediente as INGREDIENTES,
+        i.unidad_medida as MEDIDA
+    FROM
+        Menu m 
+    INNER JOIN
+        Ingredientes i ON m.id_ingredientes=i.id_ingredientes;
+
+SELECT * FROM vwMesera          --Consultoria de la vista
 
 --Respaldo
+use TijuanaArtisanMixology --Utilizacion de la base de datos
+go 
+BACKUP DATABASE TijuanaArtisanMixology
+TO DISK = 'C:\backups\TijuanaArtisanMixology.bak'
+WITH INIT --Borrar archivo previo
 
 --Transacciones
+BEGIN TRANSACTION   --Inicio de transaccion
+    BEGIN TRY   
+        --Operaciones de la transaccion
+        --Insert
+        INSERT INTO Clientes
+        (id_cliente,nombre,correo, telefono, preferencia_bebidas, puntos_acumulados, fecha_registro)
+        VALUES
+        (15,'Cristofer Bustead', 'cristofer@example.com', '6646789283','Mojito',56,default);
+
+        INSERT INTO Clientes
+        (id_cliente,nombre,correo, telefono, preferencia_bebidas, puntos_acumulados, fecha_registro)
+        VALUES
+        (16,'Miguel Hernandez', 'miguelon@example.com', '6642387564','Old Fashioned',80,default);
+        
+        --Update
+        UPDATE Pedidos
+        SET total_consumo = 200
+        WHERE Id_Pedido = 3
+        
+        --DELETE
+        DELETE FROM Clientes WHERE id_cliente=16;
+
+        --Select
+        SELECT * 
+        FROM Clientes
+        WHERE nombre LIKE '%a%'
+        AND puntos_acumulados BETWEEN 100 AND 200
+        AND correo IS NOT NULL;
+        
+
+        COMMIT; -- Confirmacion de transaccion
+    END TRY
+    BEGIN CATCH
+        ROLLBACK; --Si ocurre un error, revierte los cambios
+        PRINT 'Hubo un error, la transaccion fue revertida.'
+    END CATCH;
+
+
 -------------------------------------------------Unidad 4----------------------------------------------------------------------------------
 /*		PROCEDIMIENTOS ALMACENADOS		*/
 
